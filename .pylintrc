@@ -1,0 +1,8 @@
+[MESSAGES CONTROL]
+disable=invalid-name,too-few-public-methods,too-many-arguments,too-many-instance-attributes
+
+[MASTER]
+load-plugins=pylint_report
+
+[REPORTS]
+output-format=pylint_report.CustomJsonReporter

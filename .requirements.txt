@@ -1,0 +1,14 @@
+matplotlib
+jupyterlab
+pylint-report
+pylint
+pytest
+pytest-cov
+pytest-reportlog
+pytest-html
+Sphinx
+sphinx-rtd-theme
+sphinxcontrib-napoleon
+sphinxcontrib-bibtex
+sphinxcontrib-websupport
+sphinx-copybutton
