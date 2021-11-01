@@ -1,5 +1,6 @@
 matplotlib
 jupyterlab
+gym
 pylint-report
 pylint
 pytest

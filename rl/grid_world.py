@@ -37,6 +37,10 @@ class Coordinate:
         """Initialize instance."""
         self.x, self.y = x, y
 
+    @property
+    def xy(self):
+        return (self.x, self.y)
+
     def neighbour(self, direction):
         """Return coordinates of a potential neighbour in a given direction."""
         if direction == 'L': return Coordinate(self.x - 1, self.y)
@@ -204,6 +208,12 @@ class Grid:
         standard_cells = [cell for cell in self.cells
                           if cell.kind == CellKind.STANDARD]
         return random.choice(standard_cells)
+
+    @property
+    def position(self):
+        if self.current_cell is None:
+            return None
+        return self.current_cell.center.xy
 
     def set_init_cell(self, center=None):
         """Set which cell is currently occupied."""
