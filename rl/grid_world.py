@@ -10,6 +10,9 @@ from enum import Enum
 import random
 from itertools import product
 
+import matplotlib.pyplot as plt
+from matplotlib import patches
+
 log = logging.getLogger(__name__)
 
 DEFAULT_TRANSITION_PROBA = {'R': {'R': .8, 'U': .1, 'D': .1},
@@ -54,7 +57,7 @@ class Coordinate:
 
 class Cell:
     """Define a grid cell."""
-    def __init__(self, center=None, reward=0.0, kind=CellKind.STANDARD, color=None):
+    def __init__(self, center=None, reward=0.0, kind=CellKind.STANDARD, color='w'):
         """Initialize instance.
 
         Parameters
@@ -98,6 +101,19 @@ class Cell:
             out += f'  {key}: {cell.center}, {cell.kind.name} \n'
         return out
 
+    def plot(self, ax):
+        """Plot cell.
+
+        Parameters
+        ----------
+        ax : :obj:`pyplot.axis`
+            Axis.
+
+        """
+        rect = patches.Rectangle((self.center.x-1/2, self.center.y-1/2), 1, 1,
+                                 linewidth=1, edgecolor='b', facecolor=self.color)
+        ax.add_patch(rect)
+
 class Grid:
     """Grid."""
     def __init__(self, numb_rows=3, numb_cols=4, fraction_forbidden=0.15,
@@ -112,17 +128,20 @@ class Grid:
             'fail': fail_reward
         }
         self.cells = []
+        self.current_cell, self.previous_cell = None, None
+        self._out_of_bounds_cell = Cell(kind=CellKind.FORBIDDEN)
+
         if self.numb_cells > 0:
             self.create_cells()
-        self.current_cell = None
-        self._out_of_bounds_cell = Cell(kind=CellKind.FORBIDDEN)
+            self.random_arrangement()
+        self.done = False
 
     @staticmethod
     def grid_4x3():
         """Return the standard 4x3 grid (see Figure 17.1)."""
         grid = Grid(numb_rows=0, numb_cols=0)
         for x, y in product(range(1, 5), range(1, 4)):
-            reward, kind, color = -0.04, CellKind.STANDARD, None
+            reward, kind, color = -0.04, CellKind.STANDARD, 'w'
             if x == 2 and y == 2:
                 reward, kind, color = 0, CellKind.FORBIDDEN, 'gray'
             if x == 4 and y == 2:
@@ -140,12 +159,16 @@ class Grid:
     def create_cells(self):
         """Create the required number of cells."""
         self.cells.append(Cell(kind=CellKind.TERMINAL,
-                               reward=self.reward['fail']))
+                               reward=self.reward['fail'],
+                               color='red'))
         self.cells.append(Cell(kind=CellKind.TERMINAL,
-                               reward=self.reward['goal']))
+                               reward=self.reward['goal'],
+                               color='green'))
+
+        numb_forbidden = (self.numb_cells - 2) * self.fraction_forbidden
         for k in range(self.numb_cells - 2):
-            if k < (self.numb_cells - 2) * self.fraction_forbidden:
-                self.cells.append(Cell(kind=CellKind.FORBIDDEN))
+            if k < numb_forbidden:
+                self.cells.append(Cell(kind=CellKind.FORBIDDEN, color='gray'))
             else:
                 self.cells.append(Cell(kind=CellKind.STANDARD,
                                        reward=self.reward['standard']))
@@ -154,7 +177,10 @@ class Grid:
         """Arrange cells randomly."""
         rows = random.sample(range(self.numb_rows), self.numb_rows)
         cols = random.sample(range(self.numb_cols), self.numb_cols)
-        for cell, (row, col) in zip(self.cells, product(rows, cols)):
+        pairs = list(product(rows, cols))
+        random_pairs = random.sample(pairs, len(pairs))
+
+        for cell, (row, col) in zip(self.cells, random_pairs):
             cell.center = Coordinate(x=col, y=row)
 
         for cell in self.cells:
@@ -179,24 +205,54 @@ class Grid:
                           if cell.kind == CellKind.STANDARD]
         return random.choice(standard_cells)
 
-    def set_current_cell(self, center=None):
+    def set_init_cell(self, center=None):
         """Set which cell is currently occupied."""
+        self.previous_cell = None
         if center is None:
             self.current_cell = self.choose_standard_cell_at_random()
         else:
             self.current_cell = self.get_cell(center)
 
     def next_cell(self, action, transition_proba=None):
-        """Return next cell when executing an action from current cell."""
+        """Move to next cell according to an action."""
         if self.current_cell is None:
-            raise ValueError('Set current cell first (set_current_cell).')
+            raise ValueError('Set current cell first (set_init_cell).')
+
+        if self.done:
+            log.warning('Target state already reached.')
+            return self.done
 
         if transition_proba is None:
             transition_proba = DEFAULT_TRANSITION_PROBA
 
         seq, proba = zip(*transition_proba[action].items())
         action = random.choices(seq, proba)[0]
-        return self.current_cell.neighbors[action]
+        neighbor = self.current_cell.neighbors[action]
+        # stay where we are if we bump into a forbidden cell
+        self.previous_cell = self.current_cell
+        if neighbor.kind != CellKind.FORBIDDEN:
+            self.current_cell = neighbor
+
+        self.done = self.current_cell.kind == CellKind.TERMINAL
+        return self.done
+
+    def reset(self, center=None):
+        """Reset grid state."""
+        self.done = False
+        self.set_init_cell(center)
+
+    def plot(self, figsize=(15, 8)):
+        """Plot grid."""
+        plt.figure(figsize=figsize)
+        ax = plt.gca()
+        for cell in self.cells:
+            cell.plot(ax)
+            if cell is self.previous_cell:
+                ax.plot(cell.center.x, cell.center.y, 'yo', markersize=20, alpha=0.6)
+            if cell is self.current_cell:
+                ax.plot(cell.center.x, cell.center.y, 'ko')
+        plt.axis('equal')
+        plt.axis('off')
 
     def __repr__(self):
         return f'Grid:\n{self.cells}'
