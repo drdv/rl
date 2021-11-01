@@ -37,10 +37,6 @@ class Coordinate:
         """Initialize instance."""
         self.x, self.y = x, y
 
-    @property
-    def xy(self):
-        return (self.x, self.y)
-
     def neighbour(self, direction):
         """Return coordinates of a potential neighbour in a given direction."""
         if direction == 'L': return Coordinate(self.x - 1, self.y)
@@ -121,11 +117,12 @@ class Cell:
 class Grid:
     """Grid."""
     def __init__(self, numb_rows=3, numb_cols=4, fraction_forbidden=0.15,
-                 standard_reward=-0.04, goal_reward=1, fail_reward=-1):
+                 standard_reward=-0.04, goal_reward=1, fail_reward=-1,
+                 rand_init=True):
         """Initialize instance."""
         self.numb_rows, self.numb_cols = numb_rows, numb_cols
         self.fraction_forbidden = fraction_forbidden
-        self.numb_cells = numb_rows * numb_cols
+
         self.reward = {
             'standard': standard_reward,
             'goal': goal_reward,
@@ -135,22 +132,26 @@ class Grid:
         self.current_cell, self.previous_cell = None, None
         self._out_of_bounds_cell = Cell(kind=CellKind.FORBIDDEN)
 
-        if self.numb_cells > 0:
+        if rand_init and self.numb_cells > 0:
             self.create_cells()
             self.random_arrangement()
         self.done = False
 
+    @property
+    def numb_cells(self):
+        return self.numb_rows * self.numb_cols
+
     @staticmethod
     def grid_4x3():
         """Return the standard 4x3 grid (see Figure 17.1)."""
-        grid = Grid(numb_rows=0, numb_cols=0)
-        for x, y in product(range(1, 5), range(1, 4)):
+        grid = Grid(numb_rows=3, numb_cols=4, rand_init=False)
+        for x, y in product(range(4), range(3)):
             reward, kind, color = -0.04, CellKind.STANDARD, 'w'
-            if x == 2 and y == 2:
+            if x == 1 and y == 1:
                 reward, kind, color = 0, CellKind.FORBIDDEN, 'gray'
-            if x == 4 and y == 2:
+            if x == 3 and y == 1:
                 reward, kind, color = -1, CellKind.TERMINAL, 'red'
-            if x == 4 and y == 3:
+            if x == 3 and y == 2:
                 reward, kind, color = 1, CellKind.TERMINAL, 'green'
 
             grid.cells.append(Cell(Coordinate(x=x, y=y), reward, kind, color))
@@ -208,12 +209,6 @@ class Grid:
         standard_cells = [cell for cell in self.cells
                           if cell.kind == CellKind.STANDARD]
         return random.choice(standard_cells)
-
-    @property
-    def position(self):
-        if self.current_cell is None:
-            return None
-        return self.current_cell.center.xy
 
     def set_init_cell(self, center=None):
         """Set which cell is currently occupied."""

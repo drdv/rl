@@ -1,6 +1,7 @@
 matplotlib
 jupyterlab
 gym
+stable_baselines3
 pylint-report
 pylint
 pytest
