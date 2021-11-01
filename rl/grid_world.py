@@ -112,14 +112,30 @@ class Grid:
             'fail': fail_reward
         }
         self.cells = []
-        self.create_cells()
+        if self.numb_cells > 0:
+            self.create_cells()
         self.current_cell = None
         self._out_of_bounds_cell = Cell(kind=CellKind.FORBIDDEN)
 
     @staticmethod
-    def init_4x3_world():
+    def grid_4x3():
         """Return the standard 4x3 grid (see Figure 17.1)."""
-        grid = Grid()
+        grid = Grid(numb_rows=0, numb_cols=0)
+        for x, y in product(range(1, 5), range(1, 4)):
+            reward, kind, color = -0.04, CellKind.STANDARD, None
+            if x == 2 and y == 2:
+                reward, kind, color = 0, CellKind.FORBIDDEN, 'gray'
+            if x == 4 and y == 2:
+                reward, kind, color = -1, CellKind.TERMINAL, 'red'
+            if x == 4 and y == 3:
+                reward, kind, color = 1, CellKind.TERMINAL, 'green'
+
+            grid.cells.append(Cell(Coordinate(x=x, y=y), reward, kind, color))
+
+        for cell in grid.cells:
+            grid.populate_neighbours(cell)
+
+        return grid
 
     def create_cells(self):
         """Create the required number of cells."""
@@ -181,3 +197,6 @@ class Grid:
         seq, proba = zip(*transition_proba[action].items())
         action = random.choices(seq, proba)[0]
         return self.current_cell.neighbors[action]
+
+    def __repr__(self):
+        return f'Grid:\n{self.cells}'
