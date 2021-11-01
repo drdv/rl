@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable=invalid-name,too-few-public-methods,too-many-arguments,too-many-instance-attributes
+disable=invalid-name,multiple-statements,too-many-instance-attributes,too-many-arguments
 
 [MASTER]
 load-plugins=pylint_report

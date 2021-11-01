@@ -11,7 +11,7 @@ all:
 # docs
 # -----------------------------------------------------------------------------
 .PHONY: docs
-docs: #lint test
+docs: lint test
 	cd docs/sphinx && make html
 
 .PHONY: open

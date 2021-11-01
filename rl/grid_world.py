@@ -6,13 +6,9 @@ There are four actions: L, R, U, D.
 
 """
 import logging
-from random import sample
 from enum import Enum
 import random
 from itertools import product
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 
 log = logging.getLogger(__name__)
 
@@ -33,21 +29,19 @@ class CellKind(Enum):
     "Terminal cell."
 
 class Coordinate:
+    """Grid coordinate."""
     def __init__(self, x, y):
         """Initialize instance."""
         self.x, self.y = x, y
 
     def neighbour(self, direction):
-        if direction == 'L':
-            return Coordinate(self.x - 1, self.y)
-        elif direction == 'R':
-            return Coordinate(self.x + 1, self.y)
-        elif direction == 'U':
-            return Coordinate(self.x, self.y + 1)
-        elif direction == 'D':
-            return Coordinate(self.x, self.y - 1)
-        else:
-            raise ValueError(f'Unknown direction {direction}.')
+        """Return coordinates of a potential neighbour in a given direction."""
+        if direction == 'L': return Coordinate(self.x - 1, self.y)
+        if direction == 'R': return Coordinate(self.x + 1, self.y)
+        if direction == 'U': return Coordinate(self.x, self.y + 1)
+        if direction == 'D': return Coordinate(self.x, self.y - 1)
+
+        raise ValueError(f'Unknown direction {direction}.')
 
     def is_equal(self, other):
         """Check for equality (I don't want to overload ==)."""
@@ -105,6 +99,7 @@ class Cell:
         return out
 
 class Grid:
+    """Grid."""
     def __init__(self, numb_rows=3, numb_cols=4, fraction_forbidden=0.15,
                  standard_reward=-0.04, goal_reward=1, fail_reward=-1):
         """Initialize instance."""
@@ -125,7 +120,6 @@ class Grid:
     def init_4x3_world():
         """Return the standard 4x3 grid (see Figure 17.1)."""
         grid = Grid()
-
 
     def create_cells(self):
         """Create the required number of cells."""
